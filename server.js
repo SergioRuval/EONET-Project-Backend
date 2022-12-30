@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import express, { request } from "express";
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import { Translate } from "@google-cloud/translate/build/src/v2/index.js";
 
 const app = express();
 app.use(bodyParser.json())
@@ -28,7 +29,8 @@ app.get('/events', async function(req, res){
     if(Object.keys(req.query).length == 0){
         response = await fetch("https://eonet.gsfc.nasa.gov/api/v3/events?" + new URLSearchParams({
             status: "open",
-            days: 7
+            // days: 7
+            limit: 30
         }));
     }else{
         response = await fetch("https://eonet.gsfc.nasa.gov/api/v3/events?" + new URLSearchParams(
@@ -62,6 +64,7 @@ app.get('/magnitudes', async function(req, res){
     const data  = await response.json();
     res.send(data);
 });
+
 app.post('/temperatura', async function(req,res){
     let coordenadas= "http://api.weatherstack.com/current?access_key=540219d6872b08bbbdad73466a7cd114&query="+req.body.lat+","+req.body.lon;
     console.log(coordenadas);
@@ -70,4 +73,25 @@ app.post('/temperatura', async function(req,res){
     console.log(data)
     res.send(data);
     
+});
+
+app.post('/traducir', async function(req, res){
+    var texto = req.body.texto;
+    var target = 'es';
+    
+    const translation = new Translate();
+    let [translations] = await translation.translate(texto, target);
+    translations = Array.isArray(translations) ? translations : [translations];
+
+    var data = {
+        'traduccion': ""
+    }
+
+    translations.forEach((translation, i) => {
+        data.traduccion += translation
+    });
+
+    // console.log(data);
+    // const data = translations;
+    res.send(data)
 });
